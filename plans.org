@@ -15,3 +15,4 @@
 - Save display settings on a per-PDF basis
 - Use defaults otherwise
 - Press any key to advance
+- Add support for repeats, DS, DC, codas

@@ -9,16 +9,16 @@ REPEATS = [
 ]
 
 def resolve_repeats(repeat_sequence, num_pages):
-    nextRepeat = next(repeat_sequence)
+    next_repeat = next(repeat_sequence)
     i = 0
     while i < num_pages:
         yield i
-        if nextRepeat is not None and i == nextRepeat[0]:
-            i = nextRepeat[1]
+        if next_repeat is not None and i == next_repeat[0]:
+            i = next_repeat[1]
             try:
-                nextRepeat = next(repeat_sequence)
+                next_repeat = next(repeat_sequence)
             except StopIteration:
-                nextRepeat = None
+                next_repeat = None
         else:
             i += 1
 
@@ -40,59 +40,59 @@ class SMPlayer(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
         self.maximize()
 
-        self.layout = Gtk.Grid()
-        self.add(self.layout)
+        layout = Gtk.Grid()
+        self.add(layout)
 
         # Make sure the window catches keypresses
         self.props.events |= Gdk.EventMask.KEY_PRESS_MASK
         self.connect("key-press-event", self.keyboard_handler)
 
         # Place document in layout
-        self.docBox = Gtk.Stack()
-        self.docBox.set_hexpand(True)
-        self.docBox.set_vexpand(True)
+        self.doc_box = Gtk.Stack()
+        self.doc_box.set_hexpand(True)
+        self.doc_box.set_vexpand(True)
         # Iterate through pages and set up a child of the Stack for each
-        for pageNum, page in enumerate(self.pages):
-            pageArea = Gtk.DrawingArea()
-            pageArea.set_size_request(*page.get_size()) # Make appropriately sized
-            pageArea.connect("draw", self.draw)
-            self.docBox.add_named(pageArea, str(pageNum))
+        for page_num, page in enumerate(self.pages):
+            page_area = Gtk.DrawingArea()
+            page_area.set_size_request(*page.get_size()) # Make appropriately sized
+            page_area.connect("draw", self.draw)
+            self.doc_box.add_named(page_area, str(page_num))
 
-        self.layout.attach(self.docBox, 0, 0, 2, 1)
+        layout.attach(self.doc_box, 0, 0, 2, 1)
 
         # Next and previous page buttons
-        self.prevBtn = Gtk.Button(label="Previous page")
-        self.nextBtn = Gtk.Button(label="Next page")
+        self.prev_btn = Gtk.Button(label="Previous page")
+        self.next_btn = Gtk.Button(label="Next page")
 
-        self.prevBtn.connect("clicked", self.to_prev_page)
-        self.nextBtn.connect("clicked", self.to_next_page)
+        self.prev_btn.connect("clicked", self.to_prev_page)
+        self.next_btn.connect("clicked", self.to_next_page)
 
-        self.prevBtn.set_sensitive(False)
+        self.prev_btn.set_sensitive(False)
 
-        self.layout.attach(self.prevBtn, 0, 1, 1, 1)
-        self.layout.attach(self.nextBtn, 1, 1, 1, 1)
+        layout.attach(self.prev_btn, 0, 1, 1, 1)
+        layout.attach(self.next_btn, 1, 1, 1, 1)
 
     def keyboard_handler(self, widget, key):
         if key.keyval == Gdk.KEY_Left:
-            self.to_prev_page(_)
+            self.to_prev_page(widget)
         else:
-            self.to_next_page(_)
+            self.to_next_page(widget)
 
     def draw(self, widget, surface):
         self.pages[self.page_order[self.page_order_pos]].render(surface)
 
     def update_page(self):
-        self.docBox.set_visible_child_name(str(self.page_order[self.page_order_pos]))
+        self.doc_box.set_visible_child_name(str(self.page_order[self.page_order_pos]))
 
         if self.page_order_pos == 0:
-            self.prevBtn.set_sensitive(False)
+            self.prev_btn.set_sensitive(False)
         else:
-            self.prevBtn.set_sensitive(True)
+            self.prev_btn.set_sensitive(True)
 
         if self.page_order_pos == len(self.page_order) - 1:
-            self.nextBtn.set_sensitive(False)
+            self.next_btn.set_sensitive(False)
         else:
-            self.nextBtn.set_sensitive(True)
+            self.next_btn.set_sensitive(True)
 
     def to_prev_page(self, widget):
         if self.page_order_pos > 0:
