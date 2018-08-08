@@ -40,7 +40,7 @@ class SMPlayer(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
         self.maximize()
 
-        layout = Gtk.Grid()
+        layout = Gtk.Box()
         self.add(layout)
 
         # Make sure the window catches keypresses
@@ -58,25 +58,13 @@ class SMPlayer(Gtk.Window):
             page_area.connect("draw", self.draw)
             self.doc_box.add_named(page_area, str(page_num))
 
-        layout.attach(self.doc_box, 0, 0, 2, 1)
-
-        # Next and previous page buttons
-        self.prev_btn = Gtk.Button(label="Previous page")
-        self.next_btn = Gtk.Button(label="Next page")
-
-        self.prev_btn.connect("clicked", self.to_prev_page)
-        self.next_btn.connect("clicked", self.to_next_page)
-
-        self.prev_btn.set_sensitive(False)
-
-        layout.attach(self.prev_btn, 0, 1, 1, 1)
-        layout.attach(self.next_btn, 1, 1, 1, 1)
+        layout.add(self.doc_box)
 
     def keyboard_handler(self, widget, key):
         if key.keyval == Gdk.KEY_Left:
-            self.to_prev_page(widget)
+            self.to_prev_page()
         else:
-            self.to_next_page(widget)
+            self.to_next_page()
 
     def draw(self, widget, surface):
         current_page = self.pages[self.page_order[self.page_order_pos]]
@@ -96,22 +84,12 @@ class SMPlayer(Gtk.Window):
     def update_page(self):
         self.doc_box.set_visible_child_name(str(self.page_order[self.page_order_pos]))
 
-        if self.page_order_pos == 0:
-            self.prev_btn.set_sensitive(False)
-        else:
-            self.prev_btn.set_sensitive(True)
-
-        if self.page_order_pos == len(self.page_order) - 1:
-            self.next_btn.set_sensitive(False)
-        else:
-            self.next_btn.set_sensitive(True)
-
-    def to_prev_page(self, widget):
+    def to_prev_page(self):
         if self.page_order_pos > 0:
             self.page_order_pos -= 1
             self.update_page()
 
-    def to_next_page(self, widget):
+    def to_next_page(self):
         if self.page_order_pos < len(self.page_order) - 1:
             self.page_order_pos += 1
             self.update_page()
