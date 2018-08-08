@@ -79,7 +79,19 @@ class SMPlayer(Gtk.Window):
             self.to_next_page(widget)
 
     def draw(self, widget, surface):
-        self.pages[self.page_order[self.page_order_pos]].render(surface)
+        current_page = self.pages[self.page_order[self.page_order_pos]]
+
+        # Calculate scaling
+        page_size = current_page.get_size()
+        widget_size = widget.get_allocated_size()[0]
+
+        horizontal_scale = widget_size.width / page_size[0]
+        vertical_scale = widget_size.height / page_size[1]
+
+        scale = min(horizontal_scale, vertical_scale) # Use the lesser scale to avoid overflow
+
+        surface.scale(scale, scale)
+        current_page.render(surface)
 
     def update_page(self):
         self.doc_box.set_visible_child_name(str(self.page_order[self.page_order_pos]))
