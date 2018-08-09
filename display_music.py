@@ -5,8 +5,8 @@ from gi.repository import Gdk, Gtk, Poppler
 
 FILE = "/home/wec/Dropbox/music/shes_always_a_woman.pdf"
 REPEATS = [
-    (4, 2),
-    (3, 4)
+    (5, 3),
+    (4, 5)
 ]
 
 # View configuration constants
@@ -23,8 +23,8 @@ def resolve_repeats(repeat_sequence, num_pages):
     i = 0
     while i < num_pages:
         yield i
-        if next_repeat is not None and i == next_repeat[0]:
-            i = next_repeat[1]
+        if next_repeat is not None and i == next_repeat[0] - 1:
+            i = next_repeat[1] - 1
             try:
                 next_repeat = next(repeat_sequence)
             except StopIteration:
@@ -76,6 +76,7 @@ class SMPlayer(Gtk.Window):
             self.to_prev_page()
         elif key.keyval == Gdk.KEY_r:
             self.orientation = next(ORIENTATION)
+            self.doc_box.queue_draw()
         else:
             self.to_next_page()
 
