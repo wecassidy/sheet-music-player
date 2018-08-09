@@ -59,15 +59,10 @@ class SMPlayer(Gtk.Window):
         self.connect("key-press-event", self.keyboard_handler)
 
         # Place document in layout
-        self.doc_box = Gtk.Stack()
+        self.doc_box = Gtk.DrawingArea()
         self.doc_box.set_hexpand(True)
         self.doc_box.set_vexpand(True)
-        # Iterate through pages and set up a child of the Stack for each
-        for page_num, page in enumerate(self.pages):
-            page_area = Gtk.DrawingArea()
-            page_area.set_size_request(*page.get_size()) # Make appropriately sized
-            page_area.connect("draw", self.draw)
-            self.doc_box.add_named(page_area, str(page_num))
+        self.doc_box.connect("draw", self.draw)
 
         layout.add(self.doc_box)
 
@@ -109,18 +104,15 @@ class SMPlayer(Gtk.Window):
 
         current_page.render(surface)
 
-    def update_page(self):
-        self.doc_box.set_visible_child_name(str(self.page_order[self.page_order_pos]))
-
     def to_prev_page(self):
         if self.page_order_pos > 0:
             self.page_order_pos -= 1
-            self.update_page()
+            self.doc_box.queue_draw()
 
     def to_next_page(self):
         if self.page_order_pos < len(self.page_order) - 1:
             self.page_order_pos += 1
-            self.update_page()
+            self.doc_box.queue_draw()
 
 window = SMPlayer(FILE, iter(REPEATS))
 window.show_all()
