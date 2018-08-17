@@ -3,22 +3,39 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, Gtk, Poppler
 
-FILE = "/home/wec/Dropbox/music/shes_always_a_woman.pdf"
+FILE = "/home/wec/Dropbox/music/a_million_dreams.pdf"
 REPEATS = [
     (5, 3),
     (4, 5)
 ]
 
-# View configuration constants
 class Viewer(enum.Enum):
+    """
+    Configuration constants for the sheet music viewer.
+    """
+
     NORMAL = enum.auto()
     INVERTED = enum.auto()
     LEFT = enum.auto()
     RIGHT = enum.auto()
 
-ORIENTATION = itertools.cycle([Viewer.NORMAL, Viewer.RIGHT, Viewer.INVERTED, Viewer.LEFT])
+    ONE_PAGE = enum.auto()
+    TWO_PATE = enum.auto()
+
+# An infinite iterator for cycling clockwise through the four possible
+# orientations of the sheet music page.
+ORIENTATION = itertools.cycle([
+    Viewer.NORMAL,
+    Viewer.RIGHT,
+    Viewer.INVERTED,
+    Viewer.LEFT]
+)
 
 def resolve_repeats(repeat_sequence, num_pages):
+    """
+    Determine the order to display pages given jumps the flow.
+    """
+
     next_repeat = next(repeat_sequence)
     i = 0
     while i < num_pages:
@@ -33,11 +50,20 @@ def resolve_repeats(repeat_sequence, num_pages):
             i += 1
 
 class SMPlayer(Gtk.Window):
+    """
+    The sheet music player application.
+    """
+
     def __init__(self, file, repeats=None):
+        """
+        Set up the window: load documents, etc.
+        """
+
         # Load document
         self.document = Poppler.Document.new_from_file("file://{}".format(file), None)
         self.pages = [self.document.get_page(i) for i in range(self.document.get_n_pages())]
         self.orientation = next(ORIENTATION)
+        self.pages = Viewer.ONE_PAGE
 
         # Resolve repeats, if any
         if repeats is not None:
@@ -67,6 +93,10 @@ class SMPlayer(Gtk.Window):
         layout.add(self.doc_box)
 
     def keyboard_handler(self, widget, key):
+        """
+        Determine the action to take based on keypresses.
+        """
+
         if key.keyval == Gdk.KEY_Left:
             self.to_prev_page()
         elif key.keyval == Gdk.KEY_r:
@@ -76,6 +106,10 @@ class SMPlayer(Gtk.Window):
             self.to_next_page()
 
     def draw(self, widget, surface):
+        """
+        Draw the current page onto the window.
+        """
+
         current_page = self.pages[self.page_order[self.page_order_pos]]
         page_size = current_page.get_size()
         widget_size = widget.get_allocated_size()[0]
@@ -105,15 +139,23 @@ class SMPlayer(Gtk.Window):
         current_page.render(surface)
 
     def to_prev_page(self):
+        """
+        Move to the previous page in the sheet music, updating the
+        window.
+        """
         if self.page_order_pos > 0:
             self.page_order_pos -= 1
             self.doc_box.queue_draw()
 
     def to_next_page(self):
+        """
+        Move to the next page in the sheet music, updating the window.
+        """
+
         if self.page_order_pos < len(self.page_order) - 1:
             self.page_order_pos += 1
             self.doc_box.queue_draw()
 
-window = SMPlayer(FILE, iter(REPEATS))
+window = SMPlayer(FILE, None)
 window.show_all()
 Gtk.main()
