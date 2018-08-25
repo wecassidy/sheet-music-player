@@ -3,11 +3,11 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, Gtk, Poppler
 
-FILE = "/home/wec/Dropbox/music/a_million_dreams.pdf"
-REPEATS = [
-    (5, 3),
-    (4, 5)
-]
+FILE = "/home/wec/Dropbox/music/midnight.pdf"
+REPEATS = iter([
+    (5, 2),
+    (4, 6)
+])
 
 class Viewer(enum.Enum):
     """
@@ -63,7 +63,7 @@ class SMPlayer(Gtk.Window):
         self.document = Poppler.Document.new_from_file("file://{}".format(file), None)
         self.pages = [self.document.get_page(i) for i in range(self.document.get_n_pages())]
         self.orientation = next(ORIENTATION)
-        self.pages = Viewer.ONE_PAGE
+        self.pages_displayed = Viewer.ONE_PAGE
 
         # Resolve repeats, if any
         if repeats is not None:
@@ -102,6 +102,11 @@ class SMPlayer(Gtk.Window):
         elif key.keyval == Gdk.KEY_r:
             self.orientation = next(ORIENTATION)
             self.doc_box.queue_draw()
+        elif key.keyval == Gdk.KEY_1:
+            if self.pages_displayed == Viewer.ONE_PAGE:
+                self.pages_displayed = Viewer.TWO_PAGE
+            else:
+                self.pages_displayed = Viewer.ONE_PAGE
         else:
             self.to_next_page()
 
