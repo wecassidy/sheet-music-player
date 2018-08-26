@@ -1,12 +1,11 @@
-import enum, itertools, math
+import enum, itertools, math, time
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, Gtk, Poppler
 
-FILE = "/home/wec/Dropbox/music/midnight.pdf"
+FILE = "/home/wec/Dropbox/music/shes_always_a_woman.pdf"
 REPEATS = iter([
-    (5, 2),
-    (4, 6)
+    (5, 3)
 ])
 
 class Viewer(enum.Enum):
@@ -54,6 +53,11 @@ class SMPlayer(Gtk.Window):
     The sheet music player application.
     """
 
+    # If more than one keypress is detected within KEY_DEBOUNCE
+    # seconds, they will be ignored. This prevents multiple keys or
+    # accidental double-presses incorrectly advancing the sheet music.
+    KEY_DEBOUNCE = 0.1 # seconds
+
     def __init__(self, file, repeats=None):
         """
         Set up the window: load documents, etc.
@@ -64,6 +68,9 @@ class SMPlayer(Gtk.Window):
         self.pages = [self.document.get_page(i) for i in range(self.document.get_n_pages())]
         self.orientation = next(ORIENTATION)
         self.pages_displayed = Viewer.ONE_PAGE
+
+        # Set up key debounce
+        self.last_key_time = time.time()
 
         # Resolve repeats, if any
         if repeats is not None:
@@ -97,18 +104,21 @@ class SMPlayer(Gtk.Window):
         Determine the action to take based on keypresses.
         """
 
-        if key.keyval == Gdk.KEY_Left:
-            self.to_prev_page()
-        elif key.keyval == Gdk.KEY_r:
-            self.orientation = next(ORIENTATION)
-            self.doc_box.queue_draw()
-        elif key.keyval == Gdk.KEY_1:
-            if self.pages_displayed == Viewer.ONE_PAGE:
-                self.pages_displayed = Viewer.TWO_PAGE
+        if time.time() - self.last_key_time > SMPlayer.KEY_DEBOUNCE:
+            self.last_key_time = time.time()
+
+            if key.keyval == Gdk.KEY_Left:
+                self.to_prev_page()
+            elif key.keyval == Gdk.KEY_r:
+                self.orientation = next(ORIENTATION)
+                self.doc_box.queue_draw()
+            elif key.keyval == Gdk.KEY_1:
+                if self.pages_displayed == Viewer.ONE_PAGE:
+                    self.pages_displayed = Viewer.TWO_PAGE
+                else:
+                    self.pages_displayed = Viewer.ONE_PAGE
             else:
-                self.pages_displayed = Viewer.ONE_PAGE
-        else:
-            self.to_next_page()
+                self.to_next_page()
 
     def draw(self, widget, surface):
         """
@@ -161,6 +171,6 @@ class SMPlayer(Gtk.Window):
             self.page_order_pos += 1
             self.doc_box.queue_draw()
 
-window = SMPlayer(FILE, None)
+window = SMPlayer(FILE, REPEATS)
 window.show_all()
 Gtk.main()
