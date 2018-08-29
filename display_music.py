@@ -1,12 +1,14 @@
-import enum, itertools, math, time
+import argparse, enum, itertools, math, os, os.path, time, sys
 import gi
 gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+gi.require_version("Poppler", "0.18")
 from gi.repository import Gdk, Gtk, Poppler
 
-FILE = "/home/wec/Dropbox/music/shes_always_a_woman.pdf"
-REPEATS = iter([
-    (5, 3)
-])
+REPEATS = None
+# iter([
+#     (5, 3)
+# ])
 
 class Viewer(enum.Enum):
     """
@@ -171,6 +173,46 @@ class SMPlayer(Gtk.Window):
             self.page_order_pos += 1
             self.doc_box.queue_draw()
 
-window = SMPlayer(FILE, REPEATS)
-window.show_all()
-Gtk.main()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("file", nargs="?", default=None, help="a PDF containing sheet music")
+
+    args = parser.parse_args()
+
+    if args.file is not None: # If a file was provided on the command line
+        # Clean up any filename weirdness (e.g. ~user constructs,
+        # variables, symlinks)
+        music_file = os.path.realpath(
+            os.path.expanduser(
+                os.path.expandvars(
+                    os.path.normpath(args.file))))
+    else: # Use a file chooser dialogue if no command line argument
+        file_chooser = Gtk.FileChooserDialog("Please choose a file", None,
+            Gtk.FileChooserAction.OPEN,
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+             Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+
+        # Set up a filter to only take PDFs
+        pdf_filter = Gtk.FileFilter()
+        pdf_filter.set_name("PDF files")
+        pdf_filter.add_mime_type("application/pdf")
+        file_chooser.add_filter(pdf_filter)
+
+        # Fallback filter for any file
+        all_filter = Gtk.FileFilter()
+        all_filter.set_name("Any files")
+        all_filter.add_pattern("*")
+        file_chooser.add_filter(all_filter)
+
+        # Run the dialogue to get a file
+        response = file_chooser.run()
+        if response == Gtk.ResponseType.OK:
+            music_file = file_chooser.get_filename()
+        else:
+            sys.quit()
+
+        file_chooser.destroy()
+
+    window = SMPlayer(music_file, REPEATS)
+    window.show_all()
+    Gtk.main()
